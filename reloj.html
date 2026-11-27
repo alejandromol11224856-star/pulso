@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Pulso en el reloj</title>
+  <meta name="description" content="Simulación de Pulso en la Xiaomi Smart Band 10 Pro: registrar gastos, ver saldos y pagar pendientes desde la muñeca.">
+  <meta name="theme-color" content="#0d0d0d">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="reloj.css">
+</head>
+<body>
+  <header class="top">
+    <a class="back-link" href="./#inicio">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+      Volver a Pulso
+    </a>
+    <span class="badge">Simulación</span>
+  </header>
+
+  <main class="layout">
+    <section class="stage" aria-label="Simulación del reloj">
+      <div class="device-fit" id="fit">
+        <div class="device" id="device">
+          <div class="strap strap-top"></div>
+          <div class="body">
+            <button class="side-btn" id="sideBtn" type="button" aria-label="Botón lateral (volver al inicio)"></button>
+            <div class="glass">
+              <div class="screen" id="screen" role="application" aria-label="Pantalla del reloj"></div>
+              <div class="notif" id="notif" hidden></div>
+            </div>
+          </div>
+          <div class="strap strap-bottom"></div>
+        </div>
+      </div>
+      <div class="controls">
+        <button type="button" class="ctl" data-ctl="back">← Deslizar (volver)</button>
+        <button type="button" class="ctl" data-ctl="home">Botón lateral</button>
+        <button type="button" class="ctl accent" data-ctl="notif">Simular aviso de vencimiento</button>
+      </div>
+      <p class="tip">Tocá la pantalla como si fuera el reloj. Deslizá hacia la derecha para volver. Lo que registres acá <b>se guarda en Pulso de verdad</b>.</p>
+    </section>
+
+    <section class="info">
+      <h1>Pulso en tu Xiaomi Smart Band 10 Pro</h1>
+      <p class="lead">Así se vería registrar un gasto desde la muñeca en 4 toques: <b>Gasto → categoría → monto → cuenta</b>.</p>
+
+      <div class="card">
+        <h2>Lo que averigüé de la Band 10 Pro</h2>
+        <ul>
+          <li><b>Pantalla:</b> AMOLED de 1,74" y 336 × 480 píxeles (la simulación usa ese tamaño exacto).</li>
+          <li><b>Sistema:</b> HyperOS de Xiaomi (Vela). <b>No tiene tienda de apps de terceros</b>: Xiaomi no la promociona como reloj “programable”.</li>
+          <li><b>Pero se puede:</b> las bandas Xiaomi corren <b>mini apps en JavaScript</b> (Vela JS “quick apps”). Se instalan como archivo <code>.rpk</code> desde un menú oculto de depuración de Mi Fitness o con herramientas de la comunidad.</li>
+          <li><b>Límite importante:</b> en las bandas las mini apps <b>no tienen internet</b>. Para guardar el gasto, la banda le manda el dato al celular (Xiaomi Interconnect) y una app compañera en <b>Android</b> lo sube a Pulso.</li>
+          <li>La Band 10 Pro todavía no aparece en las listas de la comunidad: habría que probarlo en el dispositivo real.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>Plan en 3 etapas</h2>
+        <ol>
+          <li><b>Ya mismo, sin programar el reloj:</b> Pulso manda avisos al celular (“Vence Internet mañana”) y la banda los muestra con vibración. Es el botón violeta de arriba.</li>
+          <li><b>Mini app en la banda (Vela JS):</b> esta misma interfaz hecha como quick app + una app Android chiquita que recibe el gasto y lo sincroniza con tu base de datos.</li>
+          <li><b>Si querés algo 100% oficial:</b> un reloj con Wear OS o Garmin tiene tienda de apps e internet propio.</li>
+        </ol>
+      </div>
+
+      <div class="card sources">
+        <h2>Fuentes</h2>
+        <ul>
+          <li><a href="https://www.mi.com/global/product/xiaomi-smart-band-10-pro-nfc/specs/" target="_blank" rel="noopener">Xiaomi: especificaciones Smart Band 10 Pro</a></li>
+          <li><a href="https://www.trustedreviews.com/reviews/xiaomi-smart-band-10-pro" target="_blank" rel="noopener">Trusted Reviews: análisis de la Band 10 Pro</a></li>
+          <li><a href="https://iot.mi.com/vela/quickapp/en/guide/other/faq.html" target="_blank" rel="noopener">Xiaomi Vela: preguntas frecuentes (instalar .rpk)</a></li>
+          <li><a href="https://github.com/mhdbaselar/xiaomi-band-development" target="_blank" rel="noopener">Comunidad: herramientas para desarrollar en bandas Xiaomi</a></li>
+          <li><a href="https://github.com/Re-fanren/band-remote" target="_blank" rel="noopener">Comunidad: banda ↔ Android con Interconnect</a></li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <script src="reloj.js"></script>
+</body>
+</html>

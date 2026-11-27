@@ -1,0 +1,9 @@
+{
+  "name": "pulso-finanzas",
+  "private": true,
+  "type": "module",
+  "description": "Pulso: finanzas personales (PWA) con sincronización cifrada entre dispositivos.",
+  "dependencies": {
+    "@vercel/blob": "2.9.0"
+  }
+}

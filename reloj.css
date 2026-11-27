@@ -1,0 +1,149 @@
+/* Simulación de Pulso en la Xiaomi Smart Band 10 Pro (pantalla 336 × 480) */
+:root {
+  color-scheme: dark;
+  --page: #0d0d0d;
+  --panel: #1a1a19;
+  --line: rgba(255, 255, 255, .10);
+  --text: #f0efec;
+  --text-2: #c3c2b7;
+  --muted: #9a988f;
+  --accent: #3987e5;
+  --violet: #7c6cf0;
+  --good: #3fbf3f;
+  --bad: #f07a7a;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --ease: cubic-bezier(.2, .8, .2, 1);
+}
+:root[data-theme="light"] { --page: #f4f4f1; --panel: #fcfcfb; --line: rgba(11,11,11,.1); --text: #0b0b0b; --text-2: #52514e; --muted: #7a7873; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--text); font: 15px/1.5 var(--font); overflow-x: hidden; }
+svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+a { color: var(--accent); }
+button { font: inherit; cursor: pointer; }
+
+.top { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; max-width: 1180px; margin: 0 auto; }
+.back-link { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 650; }
+.badge { padding: 4px 10px; border-radius: 999px; background: rgba(124, 108, 240, .18); color: #b7aeff; font-size: 12.5px; font-weight: 700; }
+
+.layout { max-width: 1180px; margin: 0 auto; padding: 0 16px 40px; display: grid; gap: 28px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 980px) { .layout { grid-template-columns: 460px minmax(0, 1fr); align-items: start; } .stage { position: sticky; top: 16px; } }
+
+/* ---------- Dispositivo ---------- */
+.stage { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.device-fit { width: 100%; display: flex; justify-content: center; }
+.device { --sc: 1; flex: none; align-self: flex-start; width: 396px; transform: scale(var(--sc)); transform-origin: top center; display: flex; flex-direction: column; align-items: center; }
+.strap { flex: none; width: 250px; height: 70px; background: linear-gradient(90deg, #1f1f22, #2c2c31 50%, #1f1f22); }
+.strap-top { border-radius: 30px 30px 6px 6px; height: 64px; }
+.strap-bottom { border-radius: 6px 6px 30px 30px; height: 64px; }
+.body {
+  position: relative; flex: none; width: 396px; height: 540px; border-radius: 92px;
+  background: linear-gradient(145deg, #4a4a50, #1b1b1e 45%, #34343a);
+  padding: 30px; box-shadow: 0 30px 80px rgba(0,0,0,.55), inset 0 1px 1px rgba(255,255,255,.25);
+}
+.side-btn {
+  position: absolute; right: -7px; top: 190px; width: 10px; height: 74px; border: 0; border-radius: 4px;
+  background: linear-gradient(90deg, #2a2a2e, #55555c); box-shadow: 1px 0 2px rgba(0,0,0,.5);
+}
+.side-btn:active { transform: translateX(-2px); }
+.glass { position: relative; width: 336px; height: 480px; border-radius: 64px; overflow: hidden; background: #000; box-shadow: 0 0 0 2px #0a0a0a; }
+.device.buzz { animation: buzz .3s linear; }
+@keyframes buzz { 20% { transform: scale(var(--sc)) translateX(-3px); } 40% { transform: scale(var(--sc)) translateX(3px); } 60% { transform: scale(var(--sc)) translateX(-2px); } 80% { transform: scale(var(--sc)) translateX(2px); } }
+
+/* ---------- Pantalla (UI del reloj) ---------- */
+.screen {
+  position: absolute; inset: 0; color: #fff; font-family: var(--font);
+  padding: 34px 22px 30px; overflow-y: auto; scrollbar-width: none; user-select: none; touch-action: pan-y;
+}
+.screen::-webkit-scrollbar { display: none; }
+.screen.fwd { animation: inR .28s var(--ease); }
+.screen.back { animation: inL .28s var(--ease); }
+@keyframes inR { from { opacity: 0; transform: translateX(40px); } }
+@keyframes inL { from { opacity: 0; transform: translateX(-40px); } }
+.w-title { text-align: center; font-size: 22px; font-weight: 750; margin: 0 0 14px; }
+.w-sub { text-align: center; color: #9a9a9f; font-size: 17px; margin: -8px 0 14px; }
+
+/* esfera */
+.face { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 6px 0 0; }
+.face .date { color: #ff9f5a; font-size: 20px; font-weight: 700; letter-spacing: .02em; }
+.face .time { font-size: 92px; font-weight: 300; line-height: 1; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.face .comps { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.comp { border: 0; border-radius: 26px; background: #1c1c1e; color: #fff; padding: 14px 10px; text-align: center; }
+.comp .k { color: #9a9a9f; font-size: 14px; }
+.comp .v { font-size: 20px; font-weight: 750; font-variant-numeric: tabular-nums; }
+.comp.app { grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; gap: 10px; background: #2a78d6; font-size: 20px; font-weight: 750; }
+.comp.app img { width: 34px; height: 34px; border-radius: 10px; }
+
+/* botones grandes */
+.big-btn {
+  width: 100%; display: flex; align-items: center; gap: 14px; border: 0; color: #fff;
+  background: #1c1c1e; border-radius: 30px; padding: 16px 18px; margin-bottom: 10px; font-size: 21px; font-weight: 700; text-align: left;
+  transition: transform .12s, background .12s;
+}
+.big-btn:active { transform: scale(.96); background: #2c2c2e; }
+.big-btn img { width: 40px; height: 40px; flex: none; object-fit: contain; }
+.big-btn.logo img { border-radius: 11px; object-fit: cover; }
+.big-btn .grow { flex: 1; min-width: 0; }
+.big-btn small { display: block; color: #9a9a9f; font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.big-btn.red { background: #3a1d1d; }
+.big-btn.green { background: #173320; }
+.big-btn .cnt { background: #f05252; border-radius: 999px; padding: 0 10px; font-size: 16px; }
+.balance { text-align: center; margin: 0 0 16px; }
+.balance .k { color: #9a9a9f; font-size: 16px; }
+.balance .v { font-size: 34px; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+
+/* categorías */
+.cats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.cat { border: 0; border-radius: 28px; background: #1c1c1e; color: #fff; padding: 14px 6px 12px; display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 16px; font-weight: 650; }
+.cat:active { transform: scale(.95); background: #2c2c2e; }
+.cat img { width: 52px; height: 52px; object-fit: contain; }
+
+/* teclado de monto */
+.amount { text-align: center; font-size: 46px; font-weight: 800; letter-spacing: -.03em; margin: 2px 0 6px; font-variant-numeric: tabular-nums; min-height: 56px; white-space: nowrap; }
+.amount.empty { color: #5a5a5f; }
+.keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.key { border: 0; height: 58px; border-radius: 22px; background: #1c1c1e; color: #fff; font-size: 26px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.key:active { background: #3a3a3e; transform: scale(.95); }
+.key.ok { background: #2a78d6; }
+.key.ok:disabled { background: #1c2a3d; color: #5a6a80; }
+
+/* listo */
+.done { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; }
+.done .ring { width: 120px; height: 120px; border-radius: 50%; display: grid; place-items: center; background: #1f7a3a; animation: popin .45s var(--ease); }
+.done .ring svg { width: 64px; height: 64px; stroke: #fff; stroke-width: 3; stroke-dasharray: 24; stroke-dashoffset: 0; animation: draw .45s .1s var(--ease) backwards; }
+@keyframes popin { from { transform: scale(.4); opacity: 0; } }
+@keyframes draw { from { stroke-dashoffset: 24; } to { stroke-dashoffset: 0; } }
+.done h3 { margin: 6px 0 0; font-size: 26px; }
+.done p { margin: 0; color: #b5b5ba; font-size: 18px; }
+
+/* aviso (notificación) */
+.notif {
+  position: absolute; left: 12px; right: 12px; top: 26px; z-index: 5;
+  background: #26262a; border-radius: 34px; padding: 18px 16px 14px; color: #fff;
+  box-shadow: 0 14px 40px rgba(0,0,0,.6); animation: drop .4s var(--ease);
+}
+@keyframes drop { from { transform: translateY(-120%); } }
+.notif .app { display: flex; align-items: center; gap: 8px; color: #9a9a9f; font-size: 15px; }
+.notif .app img { width: 22px; height: 22px; border-radius: 6px; }
+.notif h4 { margin: 8px 0 2px; font-size: 21px; }
+.notif p { margin: 0 0 12px; color: #c8c8cc; font-size: 17px; }
+.notif .acts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.notif .acts button { border: 0; border-radius: 20px; padding: 12px 0; font-size: 18px; font-weight: 700; color: #fff; background: #3a3a3e; }
+.notif .acts .pay { background: #1f7a3a; }
+.empty-w { text-align: center; color: #9a9a9f; font-size: 18px; margin-top: 40px; }
+
+/* ---------- Controles y panel ---------- */
+.controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.ctl { border: 1px solid var(--line); background: var(--panel); color: var(--text); border-radius: 12px; padding: 9px 14px; font-weight: 650; font-size: 14px; }
+.ctl.accent { background: var(--violet); border-color: transparent; color: #fff; }
+.tip { max-width: 420px; text-align: center; color: var(--text-2); font-size: 14px; margin: 0; }
+.info h1 { font-size: clamp(24px, 4vw, 32px); line-height: 1.15; letter-spacing: -.02em; margin: 4px 0 8px; }
+.lead { color: var(--text-2); font-size: 16px; margin: 0 0 18px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 18px 20px; margin-bottom: 14px; }
+.card h2 { font-size: 16px; margin: 0 0 8px; }
+.card ul, .card ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; color: var(--text-2); }
+.card b { color: var(--text); }
+.card code { background: rgba(255,255,255,.08); padding: 1px 6px; border-radius: 6px; font-size: 13px; }
+.sources a { text-decoration: none; }
+.sources a:hover { text-decoration: underline; }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }

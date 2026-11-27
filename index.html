@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Pulso · Finanzas</title>
+  <meta name="description" content="Tus finanzas personales: cuentas, gastos, ingresos, pagos pendientes, cuotas, presupuestos y metas.">
+  <meta name="theme-color" content="#2a78d6">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Pulso">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <nav class="nav" aria-label="Secciones">
+      <div class="brand">
+        <img src="icon.svg" alt="" width="32" height="32">
+        <span>Pulso</span>
+      </div>
+      <a href="#inicio" data-view="inicio">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5M5.5 9.5V20h13V9.5"/></svg>
+        <span>Inicio</span>
+      </a>
+      <a href="#movimientos" data-view="movimientos">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16M7 20l-3-3M7 20l3-3M17 20V4M17 4l-3 3M17 4l3 3"/></svg>
+        <span>Movimientos</span>
+      </a>
+      <a href="#pendientes" data-view="pendientes">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4M9 15l2 2 4-4"/></svg>
+        <span>Pendientes</span>
+        <b class="badge" id="navBadge" hidden></b>
+      </a>
+      <a href="#planes" data-view="planes">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.5"/></svg>
+        <span>Planes</span>
+      </a>
+      <a href="#ajustes" data-view="ajustes">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+        <span>Ajustes</span>
+      </a>
+      <button class="nav-add" type="button" data-action="new-tx">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        <span>Nuevo movimiento</span>
+        <kbd>N</kbd>
+      </button>
+    </nav>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow" id="viewDate"></p>
+          <h1 id="viewTitle">Inicio</h1>
+        </div>
+        <div class="topbar-actions">
+          <button class="icon-btn sync-btn" id="syncBtn" type="button" data-action="go-sync" data-state="off" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18h10a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.1 9.3 4.5 4.5 0 0 0 7 18Z"/></svg>
+          </button>
+          <div class="seg" role="group" aria-label="Moneda para ver totales">
+            <button type="button" data-action="view-cur" data-cur="ARS">ARS</button>
+            <button type="button" data-action="view-cur" data-cur="USD">USD</button>
+          </div>
+          <button class="icon-btn" type="button" data-action="toggle-theme" aria-label="Cambiar tema" title="Cambiar tema">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/></svg>
+          </button>
+        </div>
+      </header>
+      <div id="demoBanner" class="demo-banner" hidden>
+        <span>Estás viendo <b>datos de ejemplo</b> para que pruebes la app.</span>
+        <button type="button" class="btn small" data-action="start-empty">Empezar con mis datos</button>
+      </div>
+      <div id="spaceBar" class="space-bar" role="group" aria-label="Qué plata ver" hidden></div>
+      <section id="view" class="view" aria-live="polite"></section>
+    </main>
+  </div>
+
+  <button class="fab" type="button" data-action="new-tx" aria-label="Nuevo movimiento">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+  </button>
+
+  <dialog id="modal">
+    <form id="modalForm" method="dialog" novalidate>
+      <header class="modal-head">
+        <h2 id="modalTitle"></h2>
+        <button type="button" class="icon-btn" data-action="close-modal" aria-label="Cerrar">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </header>
+      <div id="modalBody" class="modal-body"></div>
+      <footer id="modalFoot" class="modal-foot"></footer>
+    </form>
+  </dialog>
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+  <div id="tooltip" class="tooltip" role="status" hidden></div>
+  <input type="file" id="importFile" accept="application/json,.json" hidden>
+
+  <script src="app.js"></script>
+</body>
+</html>
