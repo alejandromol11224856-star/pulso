@@ -4,6 +4,12 @@ App de finanzas personales para el celular (Android) y la compu. Está hecha par
 
 **Publicada:** https://pulso-finanzas-three.vercel.app · **App Android:** [Pulso.apk](https://pulso-finanzas-three.vercel.app/Pulso.apk) (código en el repo `pulso-android`)
 
+<p align="center">
+  <img src="docs/inicio.png" width="240" alt="Inicio: total, libre del mes y Poner al día">
+  <img src="docs/movimientos.png" width="240" alt="Movimientos cargados solos desde los avisos del banco">
+  <img src="docs/planes.png" width="240" alt="Plan de ahorro y metas">
+</p>
+
 ## Qué hace
 
 - **Inicio simple:** cuánto tenés, cuánto queda libre después de pagar lo del mes, y un botón **“Poner al día mis saldos”**. Escribís el saldo real y la diferencia se anota como “Gastos sin anotar”.
@@ -45,3 +51,7 @@ npx vercel deploy --prod
 ```
 
 El token de Vercel queda en `.env.local`, que **nunca** se sube al repo.
+
+## Licencia
+
+© 2026 Alejandro Molina. **Todos los derechos reservados.** El código está publicado para que se pueda ver como portfolio; no se puede copiar ni usar sin permiso. Ver [LICENSE](LICENSE).
