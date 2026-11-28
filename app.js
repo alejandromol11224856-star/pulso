@@ -164,6 +164,22 @@ const faviconOf = (domain) => `https://www.google.com/s2/favicons?domain=${encod
 
 /* ---------- Estado ---------- */
 const KEY = 'pulso.v1';
+const EXTRA_CATS = [
+  ['cx-peluqueria', 'gasto', 'Peluquería', 'img/tijera.png'],
+  ['cx-psicologa', 'gasto', 'Psicóloga', 'img/corazon.png'],
+  ['cx-regalos', 'gasto', 'Regalos', 'img/regalo.png'],
+  ['cx-kiosco', 'gasto', 'Kiosco', 'img/cafe.png'],
+  ['cx-mascotas', 'gasto', 'Mascotas', 'img/perro.png'],
+  ['cx-hogar', 'gasto', 'Hogar', 'img/casa-jardin.png'],
+  ['cx-tecnologia', 'gasto', 'Tecnología', 'img/laptop.png'],
+  ['cx-viajes', 'gasto', 'Viajes', 'img/avion.png'],
+  ['cx-impuestos', 'gasto', 'Impuestos', 'img/balanza.png'],
+  ['cx-tarjeta', 'gasto', 'Tarjeta y deudas', 'img/tarjeta.png'],
+  ['cx-aguinaldo', 'ingreso', 'Aguinaldo', 'img/bolsa-plata.png'],
+  ['cx-reintegros', 'ingreso', 'Reintegros', 'img/moneda.png'],
+  ['cx-regalos-in', 'ingreso', 'Regalos recibidos', 'img/regalo.png'],
+  ['cx-intereses', 'ingreso', 'Intereses', 'img/grafico.png'],
+];
 function loadState() {
   try { const raw = localStorage.getItem(KEY); return raw ? JSON.parse(raw) : null; } catch { return null; }
 }
@@ -172,6 +188,8 @@ migrate();
 function persist() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { /* sin almacenamiento */ } }
 /** Guarda y, si cambiaron los datos (no solo la vista), agenda la sincronización. */
 function save() {
+  const now = Date.now();
+  for (const t of S.txs) if (!t.at) t.at = now;
   const sig = dataSig();
   if (sig !== lastDataHash) {
     lastDataHash = sig;
@@ -193,6 +211,15 @@ function migrate() {
   S.spaces = Array.isArray(S.spaces) ? S.spaces : [];
   if (!S.spaces.some((s) => s.id === 'personal')) S.spaces.unshift({ id: 'personal', name: 'Personal', emoji: 'img/casa.png', kind: 'personal' });
   S.plan = S.plan || {};
+  // v2 de categorías: más opciones comunes (ids fijos para que no se dupliquen al sincronizar)
+  if ((S.catsV || 0) < 2) {
+    for (const [id, kind, name, emoji] of EXTRA_CATS) {
+      if (S.categories.some((c) => c.id === id || (c.kind === kind && !c.space && norm(c.name) === norm(name)))) continue;
+      const at = S.categories.findIndex((c) => c.kind === kind && /^otros/i.test(c.name) && !c.space);
+      S.categories.splice(at < 0 ? S.categories.length : at, 0, { id, kind, name, emoji });
+    }
+    S.catsV = 2;
+  }
   // v2: los emojis pasan a ser imágenes (y las cuentas conocidas usan su logo)
   const toImg = (e) => (e && !isImg(e) && EMOJI_MAP[e] ? `img/${EMOJI_MAP[e]}.png` : e);
   S.accounts.forEach((a) => { if (!isImg(a.emoji)) a.emoji = findLogo(a.name) || toImg(a.emoji) || 'img/banco.png'; });
@@ -281,6 +308,18 @@ const cents = (s) => String(s).replace(/,(\d{2})$/, '<span class="cents">,$1</sp
 
 /* ---------- Adivinar categoría ---------- */
 const KEYWORDS = [
+  [/(peluquer|barberi|barber|corte de pelo|cortarme el pelo|corte pelo)/, 'Peluquería'],
+  [/(psicolog|terapia|terapeut|psiquiatr)/, 'Psicóloga'],
+  [/(regalo|cumple)/, 'Regalos'],
+  [/(kiosco|kiosko|golosina|alfajor|cigarr)/, 'Kiosco'],
+  [/(veterinar|mascota|alimento (para )?(perro|gato)|petshop|pet shop)/, 'Mascotas'],
+  [/(vuelo|hotel|airbnb|pasaje|despegar|booking|aerolineas|flybondi|jetsmart)/, 'Viajes'],
+  [/(afip|arca|monotributo|ingresos brutos|impuesto|patente)/, 'Impuestos'],
+  [/(resumen (de )?tarjeta|pago (de )?tarjeta|prestamo|cuota del prestamo)/, 'Tarjeta y deudas'],
+  [/(limpieza|mueble|ferreteria|easy|sodimac|bazar)/, 'Hogar'],
+  [/(aguinaldo|\bsac\b)/, 'Aguinaldo'],
+  [/(reintegro|devolucion)/, 'Reintegros'],
+  [/(interes|rendimiento|plazo fijo)/, 'Intereses'],
   [/(super|coto|carrefour|jumbo|\bdia\b|disco|vea|changomas|chino|almacen|verduler|carniceri|panaderi)/, 'Comida'],
   [/(rappi|pedidos ?ya|mc ?donald|\bmc\b|burger|mostaza|kfc|delivery|pizza|empanada|sushi)/, 'Delivery'],
   [/(sube|uber|cabify|didi|taxi|ypf|shell|axion|nafta|peaje|estacionamiento|colectivo|subte|tren)/, 'Transporte'],
@@ -456,6 +495,7 @@ const I = {
   paste: '<svg viewBox="0 0 24 24"><rect x="6" y="5" width="12" height="16" rx="2"/><path d="M9 5V3h6v2M9 11h6M9 15h4"/></svg>',
   sync: '<svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14-4.5L4 9M4 4v5h5M4 13a8 8 0 0 0 14 4.5l2-2.5M20 20v-5h-5"/></svg>',
   repeat: '↻',
+  filter: '<svg viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4"/></svg>',
 };
 
 /* =========================================================
@@ -561,7 +601,7 @@ function renderInicio(view) {
   const projected = Math.round((st.expense / Math.max(1, dayN)) * dim);
 
   const upcoming = visPendings().sort((a, c) => a.due.localeCompare(c.due)).slice(0, 5);
-  const recent = S.txs.filter((t) => txInSpace(t)).sort((a, c) => c.date.localeCompare(a.date) || 0).slice(0, 5);
+  const recent = byNewest(S.txs.filter((t) => txInSpace(t))).slice(0, 5);
 
   // Un solo aviso, el más importante. Si hay plan de ahorro y falta apartar, ese primero.
   const pl = !biz && planInfo();
@@ -808,47 +848,91 @@ function pendingRowSimple(p) {
 /* =========================================================
    MOVIMIENTOS
    ========================================================= */
-function renderMovimientos(view) {
+/** Ordena de más nuevo a más viejo: por fecha y, el mismo día, el último que se cargó arriba. */
+function byNewest(list) {
+  const idx = new Map(S.txs.map((t, i) => [t.id, i]));
+  return list.sort((a, b) => b.date.localeCompare(a.date) || (b.at || 0) - (a.at || 0) || (idx.get(b.id) ?? 0) - (idx.get(a.id) ?? 0));
+}
+/** Filtros válidos: si quedó guardado uno que ya no existe (cuenta borrada, categoría vacía), se limpia solo. */
+function cleanFilters() {
   const u = S.ui;
-  const advanced = (u.account !== 'all') + (u.cat !== 'all') + (u.sort !== 'date-desc') + (u.group !== 'day');
-  const open = u.more || advanced > 0;
+  if (u.account !== 'all' && !visAccounts().some((a) => a.id === u.account)) u.account = 'all';
+  if (u.cat !== 'all' && u.cat !== 'none' && !cat(u.cat)) u.cat = 'all';
+  if (!['all', 'gasto', 'ingreso', 'transferencia'].includes(u.type)) u.type = 'all';
+  if (u.period === 'prev') { u.period = 'month'; u.month = monthKey(addMonths(todayISO().slice(0, 8) + '01', -1)); }
+  if (!['month', '3m', 'year', 'all'].includes(u.period)) u.period = 'month';
+  if (!/^\d{4}-\d{2}$/.test(u.month || '') || u.month > monthKey(todayISO())) u.month = monthKey(todayISO());
+  if (!['date-desc', 'date-asc', 'amt-desc', 'amt-asc'].includes(u.sort)) u.sort = 'date-desc';
+  if (!['day', 'cat', 'acc', 'none'].includes(u.group)) u.group = 'day';
+}
+const PERIODS = { month: 'Un mes', '3m': 'Últimos 3 meses', year: 'Este año', all: 'Todo' };
+const SORTS = { 'date-desc': 'Más nuevos primero', 'date-asc': 'Más viejos primero', 'amt-desc': 'Mayor monto', 'amt-asc': 'Menor monto' };
+const GROUPS = { day: 'Por día', cat: 'Por categoría', acc: 'Por cuenta', none: 'Sin agrupar' };
+
+function renderMovimientos(view) {
+  cleanFilters();
+  const u = S.ui;
+  const cur = monthKey(todayISO());
+  const chips = [];
+  if (u.account !== 'all') chips.push(['account', accName(u.account)]);
+  if (u.cat !== 'all') chips.push(['cat', u.cat === 'none' ? 'Sin categoría' : cat(u.cat).name]);
+  if (u.type === 'transferencia') chips.push(['type', 'Transferencias']);
+  if (u.sort !== 'date-desc') chips.push(['sort', SORTS[u.sort]]);
+  if (u.group !== 'day') chips.push(['group', GROUPS[u.group]]);
+  const n = chips.length + (u.period !== 'month');
   view.innerHTML = `
-  <div class="toolbar">
-    <label class="search">${I.search}<input id="q" type="search" placeholder="Buscar…" value="${esc(u.q)}" aria-label="Buscar"></label>
-    <div class="chips" role="group" aria-label="Tipo">
-      ${[['all', 'Todos'], ['gasto', 'Gastos'], ['ingreso', 'Ingresos'], ['transferencia', 'Transferencias']].map(([k, l]) => `<button type="button" class="chip ${u.type === k ? 'on' : ''}" data-action="f-type" data-v="${k}">${l}</button>`).join('')}
+  <div class="mv-top">
+    <label class="search">${I.search}<input id="q" type="search" placeholder="Buscar un movimiento…" value="${esc(u.q)}" aria-label="Buscar"></label>
+    <button type="button" class="btn filter-btn ${n ? 'on' : ''}" data-action="mv-filters" aria-label="Filtros${n ? ` (${n} activos)` : ''}">${I.filter}<span>Filtros</span>${n ? `<b>${n}</b>` : ''}</button>
+  </div>
+  <div class="mv-bar">
+    ${u.period === 'month'
+      ? `<div class="month-nav">
+          <button type="button" class="icon-btn sm" data-action="mv-month" data-d="-1" aria-label="Mes anterior">‹</button>
+          <b>${monthLabel(u.month, true)}</b>
+          <button type="button" class="icon-btn sm" data-action="mv-month" data-d="1" aria-label="Mes siguiente" ${u.month >= cur ? 'disabled' : ''}>›</button>
+        </div>`
+      : `<button type="button" class="chip on" data-action="mv-clear" data-k="period">${PERIODS[u.period]} ✕</button>`}
+    <div class="seg mv-type" role="group" aria-label="Tipo">
+      ${[['all', 'Todo'], ['gasto', 'Gastos'], ['ingreso', 'Ingresos']].map(([k, l]) => `<button type="button" class="${u.type === k ? 'on' : ''}" data-action="f-type" data-v="${k}">${l}</button>`).join('')}
     </div>
-    <select class="select" id="fPeriod" aria-label="Período">
-      ${[['month', 'Este mes'], ['prev', 'Mes pasado'], ['3m', 'Últimos 3 meses'], ['year', 'Este año'], ['all', 'Todo']].map(([k, l]) => `<option value="${k}" ${u.period === k ? 'selected' : ''}>${l}</option>`).join('')}
-    </select>
-    <button type="button" class="btn small ${open ? 'on' : ''}" data-action="more-filters" aria-expanded="${open}">Más filtros${advanced ? ` (${advanced})` : ''}</button>
   </div>
-  <div class="toolbar more" ${open ? '' : 'hidden'}>
-    <select class="select" id="fAccount" aria-label="Cuenta">
-      <option value="all">Todas las cuentas</option>
-      ${visAccounts().map((a) => `<option value="${a.id}" ${u.account === a.id ? 'selected' : ''}>${esc(a.name)}</option>`).join('')}
-    </select>
-    <select class="select" id="fCat" aria-label="Categoría">
-      <option value="all">Todas las categorías</option>
-      ${S.categories.map((c) => `<option value="${c.id}" ${u.cat === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}
-    </select>
-    <select class="select" id="fSort" aria-label="Ordenar">
-      ${[['date-desc', 'Más recientes'], ['date-asc', 'Más antiguos'], ['amt-desc', 'Mayor monto'], ['amt-asc', 'Menor monto'], ['cat', 'Categoría A-Z'], ['desc', 'Descripción A-Z'], ['acc', 'Cuenta A-Z']].map(([k, l]) => `<option value="${k}" ${u.sort === k ? 'selected' : ''}>Orden: ${l}</option>`).join('')}
-    </select>
-    <select class="select" id="fGroup" aria-label="Agrupar">
-      ${[['day', 'Por día'], ['cat', 'Por categoría'], ['acc', 'Por cuenta'], ['month', 'Por mes'], ['none', 'Sin agrupar']].map(([k, l]) => `<option value="${k}" ${u.group === k ? 'selected' : ''}>Agrupar: ${l}</option>`).join('')}
-    </select>
-  </div>
+  ${chips.length ? `<div class="mv-chips">${chips.map(([k, l]) => `<button type="button" class="chip on" data-action="mv-clear" data-k="${k}">${esc(l)} ✕</button>`).join('')}</div>` : ''}
   <div id="txSummary"></div>
   <div class="card"><div id="txList" class="list"></div></div>`;
 
   const q = $('#q', view);
   let tm;
   q.addEventListener('input', () => { clearTimeout(tm); tm = setTimeout(() => { S.ui.q = q.value; save(); updateTxList(); }, 120); });
-  [['#fPeriod', 'period'], ['#fAccount', 'account'], ['#fCat', 'cat'], ['#fSort', 'sort'], ['#fGroup', 'group']].forEach(([sel, key]) => {
-    $(sel, view).addEventListener('change', (e) => { S.ui[key] = e.target.value; save(); updateTxList(); });
-  });
   updateTxList();
+}
+
+function filtersSheet() {
+  cleanFilters();
+  const u = S.ui;
+  const opt = (obj, sel) => Object.entries(obj).map(([k, l]) => `<option value="${k}" ${k === sel ? 'selected' : ''}>${esc(l)}</option>`).join('');
+  openModal({
+    title: 'Filtros',
+    body: `
+      <div class="fields-2">
+        <label class="field"><span>Cuenta</span><select class="select" name="account"><option value="all">Todas</option>${visAccounts().map((a) => `<option value="${a.id}" ${u.account === a.id ? 'selected' : ''}>${esc(a.name)}</option>`).join('')}</select></label>
+        <label class="field"><span>Categoría</span><select class="select" name="cat"><option value="all">Todas</option><option value="none" ${u.cat === 'none' ? 'selected' : ''}>Sin categoría</option>${S.categories.map((c) => `<option value="${c.id}" ${u.cat === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></label>
+        <label class="field"><span>Tipo</span><select class="select" name="type">${opt({ all: 'Todos', gasto: 'Gastos', ingreso: 'Ingresos', transferencia: 'Transferencias' }, u.type)}</select></label>
+        <label class="field"><span>Período</span><select class="select" name="period">${opt(PERIODS, u.period)}</select></label>
+        <label class="field"><span>Ordenar</span><select class="select" name="sort">${opt(SORTS, u.sort)}</select></label>
+        <label class="field"><span>Agrupar</span><select class="select" name="group">${opt(GROUPS, u.group)}</select></label>
+      </div>
+      <div class="btn-row" style="margin-top:4px">
+        <button type="button" class="btn small" data-action="clear-filters">Limpiar todo</button>
+        <button type="button" class="btn small" data-action="summary" data-mk="${u.period === 'month' ? u.month : monthKey(todayISO())}">Ver resumen del mes</button>
+        <button type="button" class="btn small" data-action="export-csv">${I.dl}Descargar CSV</button>
+      </div>`,
+    submit: 'Aplicar',
+    onSubmit: (fd) => {
+      ['account', 'cat', 'type', 'period', 'sort', 'group'].forEach((k) => { S.ui[k] = fd.get(k); });
+      save(); render();
+    },
+  });
 }
 
 function filteredTxs() {
@@ -856,8 +940,7 @@ function filteredTxs() {
   const today = todayISO();
   const mk = monthKey(today);
   let from = '0000', to = '9999';
-  if (u.period === 'month') { from = mk + '-01'; to = mk + '-31'; }
-  if (u.period === 'prev') { const p = monthKey(addMonths(mk + '-01', -1)); from = p + '-01'; to = p + '-31'; }
+  if (u.period === 'month') { const m = u.month || mk; from = m + '-01'; to = m + '-31'; }
   if (u.period === '3m') { from = addMonths(mk + '-01', -2); }
   if (u.period === 'year') { from = today.slice(0, 4) + '-01-01'; to = today.slice(0, 4) + '-12-31'; }
   const qn = norm(u.q);
@@ -866,7 +949,7 @@ function filteredTxs() {
     if (t.date < from || t.date > to || !txInSpace(t)) return false;
     if (u.type !== 'all' && t.type !== u.type) return false;
     if (u.account !== 'all' && t.accountId !== u.account && t.toAccountId !== u.account) return false;
-    if (u.cat !== 'all' && t.categoryId !== u.cat) return false;
+    if (u.cat === 'none' ? !!cat(t.categoryId) || t.type === 'transferencia' : u.cat !== 'all' && t.categoryId !== u.cat) return false;
     if (qn) {
       const hay = norm(`${t.desc} ${catOf(t).name} ${accName(t.accountId)} ${t.note || ''}`);
       const amountHit = qDigits.length >= 2 && String(Math.floor(Math.abs(t.amount) / 100)).includes(qDigits);
@@ -884,7 +967,9 @@ function filteredTxs() {
     desc: (a, b) => (a.desc || '').localeCompare(b.desc || '', 'es'),
     acc: (a, b) => accName(a.accountId).localeCompare(accName(b.accountId), 'es') || b.date.localeCompare(a.date),
   };
-  list.sort(sorters[u.sort] || sorters['date-desc']);
+  if (u.sort === 'date-desc' || !sorters[u.sort]) byNewest(list);
+  else if (u.sort === 'date-asc') byNewest(list).reverse();
+  else list.sort(sorters[u.sort]);
   return list;
 }
 
@@ -893,17 +978,9 @@ function updateTxList() {
   const sp = curSpace();
   const inc = list.filter((t) => t.type === 'ingreso' || (t.ownerPay && sp !== 'all' && inSpace(t.toAccountId, sp) && !inSpace(t.accountId, sp))).reduce((s, t) => s + (t.ownerPay ? toARS(t.toAmount ?? t.amount, acc(t.toAccountId)?.currency) : toARS(t.amount, txCur(t))), 0);
   const exp = list.filter((t) => t.type === 'gasto').reduce((s, t) => s + toARS(t.amount, txCur(t)), 0);
-  const activeFilters = (S.ui.q ? 1 : 0) + (S.ui.type !== 'all') + (S.ui.account !== 'all') + (S.ui.cat !== 'all');
-  $('#txSummary').innerHTML = `<div class="summary">
-    <span>Entró <b class="num amt in">${show(inc)}</b></span>
-    <span>Gastaste <b class="num">${show(exp)}</b></span>
-    <span class="grow"></span>
-    ${activeFilters ? '<button type="button" class="btn small" data-action="clear-filters">Limpiar filtros</button>' : ''}
-    <button type="button" class="btn small" data-action="summary" data-mk="${monthKey(todayISO())}">${I.chart || ''}Resumen</button>
-    <button type="button" class="btn small" data-action="export-csv">${I.dl}CSV</button>
-  </div>`;
+  $('#txSummary').innerHTML = `<div class="mv-sum"><span>Entró <b class="num amt in">${cents(show(inc))}</b></span><span>Gastaste <b class="num">${cents(show(exp))}</b></span><span class="n">${list.length} movimiento${list.length === 1 ? '' : 's'}</span></div>`;
   const box = $('#txList');
-  if (!list.length) { box.innerHTML = emptyBox('lupa', 'No hay movimientos con estos filtros.'); return; }
+  if (!list.length) { box.innerHTML = emptyBox('lupa', S.txs.length ? 'No hay movimientos con estos filtros. Probá otro mes o tocá Filtros → Limpiar todo.' : 'Todavía no cargaste movimientos. Tocá + para agregar uno.'); return; }
   const g = S.ui.group;
   if (g === 'none') { box.innerHTML = list.map(txRow).join(''); return; }
   const keyOf = { day: (t) => t.date, month: (t) => monthKey(t.date), cat: (t) => catOf(t).name, acc: (t) => accName(t.accountId) }[g];
@@ -1482,6 +1559,8 @@ function txForm(t = null, preset = {}) {
         desc: String(fd.get('desc') || '').trim(), accountId: fd.get('accountId'), note: String(fd.get('note') || '').trim(),
         categoryId: type === 'gasto' || type === 'ingreso' ? fd.get('categoryId') || null : null,
       };
+      if (d.at) rec.at = d.at;
+      if (d.auto) rec.auto = true;
       if (type === 'transferencia') {
         rec.toAccountId = fd.get('toAccountId');
         if (rec.toAccountId === rec.accountId) { toast('Elegí dos cuentas distintas'); return false; }
@@ -2480,10 +2559,13 @@ document.addEventListener('click', (e) => {
     case 'explain-available':
       openModal({ title: '¿Cómo se calcula?', body: '<div class="prose"><p>Es todo lo que tenés <b>menos</b> lo que tenés que pagar hasta fin de mes, <b>más</b> lo que te tienen que pagar en ese tiempo.</p><p>Es la plata que podés usar sin quedarte corto con tus vencimientos.</p></div>', submit: 'Entendido' });
       break;
-    case 'filter-account': Object.assign(S.ui, { account: id, cat: 'all', type: 'all', q: '' }); save(); location.hash = '#movimientos'; break;
-    case 'filter-cat': Object.assign(S.ui, { cat: id, account: 'all', type: 'gasto', q: '', period: 'month' }); save(); hideTip(); location.hash = '#movimientos'; break;
+    case 'filter-account': Object.assign(S.ui, { account: id, cat: 'all', type: 'all', q: '', period: 'month', month: monthKey(todayISO()) }); save(); location.hash = '#movimientos'; break;
+    case 'filter-cat': Object.assign(S.ui, { cat: cat(id) ? id : 'none', account: 'all', type: 'gasto', q: '', period: 'month', month: monthKey(todayISO()) }); save(); hideTip(); location.hash = '#movimientos'; break;
     case 'f-type': S.ui.type = el.dataset.v; save(); $$('[data-action="f-type"]').forEach((b) => b.classList.toggle('on', b === el)); updateTxList(); break;
-    case 'clear-filters': Object.assign(S.ui, { q: '', type: 'all', account: 'all', cat: 'all', sort: 'date-desc', group: 'day', more: false }); save(); render(); break;
+    case 'clear-filters': Object.assign(S.ui, { q: '', type: 'all', account: 'all', cat: 'all', sort: 'date-desc', group: 'day', period: 'month', month: monthKey(todayISO()), more: false }); save(); closeModal(); render(); break;
+    case 'mv-filters': filtersSheet(); break;
+    case 'mv-month': S.ui.month = monthKey(addMonths((S.ui.month || monthKey(todayISO())) + '-01', Number(el.dataset.d))); save(); render(); break;
+    case 'mv-clear': { const k = el.dataset.k; S.ui[k] = { account: 'all', cat: 'all', type: 'all', sort: 'date-desc', group: 'day', period: 'month' }[k]; save(); render(); break; }
     case 'export-csv': exportCSV(filteredTxs()); break;
     case 'export-csv-all': exportCSV([...S.txs].sort((x, y) => y.date.localeCompare(x.date))); break;
     case 'p-tab': S.ui.ptab = el.dataset.v; save(); render(); break;
@@ -2559,6 +2641,14 @@ $('#importFile').addEventListener('change', async (e) => {
     if (!Array.isArray(data.accounts) || !Array.isArray(data.txs)) throw new Error('formato');
     snapshot(); delete data.sync; replaceState(data); save(); render(); toast('Copia restaurada', true);
   } catch { toast('Ese archivo no es una copia de Pulso'); }
+});
+
+// En los montos solo se pueden escribir números (y coma, punto o un signo menos al principio)
+document.addEventListener('input', (e) => {
+  const el = e.target;
+  if (!(el instanceof HTMLInputElement) || !/^(decimal|numeric)$/.test(el.inputMode)) return;
+  const clean = el.inputMode === 'numeric' ? el.value.replace(/\D/g, '') : el.value.replace(/[^\d.,-]/g, '').replace(/(?!^)-/g, '');
+  if (clean !== el.value) el.value = clean;
 });
 
 $('#modal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeModal(); });

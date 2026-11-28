@@ -1,6 +1,6 @@
 // Service worker de Pulso: permite instalar la app y abrirla sin conexión.
 // Estrategia "primero la red": siempre intenta la versión nueva y, si no hay internet, usa la copia guardada.
-const CACHE = 'pulso-v7';
+const CACHE = 'pulso-v8';
 const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'reloj.html', 'reloj.css', 'reloj.js'];
 
 self.addEventListener('install', (e) => {
